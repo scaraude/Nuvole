@@ -77,7 +77,7 @@ void setup() {
   InitVariables();
 
   //------------------------FILE-----------------
-  myFile = SD.open("Nuvole.txt");
+  myFile = SD.open("Mattina.txt");
 
   // -------------------PREMIER REMPLISSAGE---------
   bool recFini = false;
@@ -124,7 +124,8 @@ void loop() {
 
 void Lecture()
 {
-  float utemps = 60000000 / (tempo *4);
+  float sensorValue = 0.006466 * analogRead(A8) - 2.549569;
+  float utemps = 60000000 / (tempo * 4) * sensorValue;
   static bool offPassed = false;
 
   if (micros() >= tRec + utemps * 0.5 && !offPassed) // check si il faut eteindre
@@ -148,27 +149,13 @@ void LedOff()
 {
   for (int i = 0; i <= *compteurP; i++)
   {
-    if (curseurP >= (stockP[i].tdebut + stockP[i].duree))
+    if (stockP[i].led == 253)
     {
-      pixels.setPixelColor(stockP[i].led, 0);
-      pixels.show();
+      tempo = stockP[i].tdebut;
 
       stockP[*compteurP].led = 0;
       stockP[*compteurP].tdebut = 0;
-      stockP[*compteurP].duree = 0;
-      stockP[*compteurP].main = 0;
-
-      for (int t = 1; stockP[i + t].led != 0; t++)
-      {
-        stockP[i + t - 1].led = stockP[i + t].led;
-        stockP[i + t].led = 0;
-        stockP[i + t - 1].tdebut = stockP[i + t].tdebut;
-        stockP[i + t].tdebut = 0;
-        stockP[i + t - 1].duree = stockP[i + t].duree;
-        stockP[i + t].duree = 0;
-        stockP[i + t - 1].main = stockP[i + t].main;
-        stockP[i + t].main = 0;
-      }
+      Decalage(i);
 
       if (*compteurP > 0)
       {
@@ -176,6 +163,39 @@ void LedOff()
         i--;
       }
     }
+    else if (curseurP >= (stockP[i].tdebut + stockP[i].duree))
+    {
+      //Serial.println("dans Erase");
+      pixels.setPixelColor(stockP[i].led, 0);
+      pixels.show();
+
+      stockP[*compteurP].led = 0;
+      stockP[*compteurP].tdebut = 0;
+      stockP[*compteurP].duree = 0;
+      stockP[*compteurP].main = 0;
+      Decalage(i);
+
+      if (*compteurP > 0)
+      {
+        (*compteurP)--;
+        i--;
+      }
+    }
+  }
+}
+
+void Decalage(int i)
+{
+  for (int t = 1; stockP[i + t].led != 0; t++)
+  {
+    stockP[i + t - 1].led = stockP[i + t].led;
+    stockP[i + t].led = 0;
+    stockP[i + t - 1].tdebut = stockP[i + t].tdebut;
+    stockP[i + t].tdebut = 0;
+    stockP[i + t - 1].duree = stockP[i + t].duree;
+    stockP[i + t].duree = 0;
+    stockP[i + t - 1].main = stockP[i + t].main;
+    stockP[i + t].main = 0;
   }
 }
 
@@ -293,7 +313,7 @@ bool Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
   }
 
   curseurP = 0;
-  Affiche();
+  //Affiche();
 
   if (!myFile.available())
     return true;
