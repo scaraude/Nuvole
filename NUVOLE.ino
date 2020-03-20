@@ -90,6 +90,7 @@ void setup() {
     recFini = Rec();
   }
   Aiguillage();
+  tRec = micros();
 }
 
 void loop() {
@@ -108,6 +109,8 @@ void loop() {
         //Serial.println("Dans 3 eme boucle");
         Lecture();
         recFini = Rec();
+        if (recFini)
+          Serial.println("Lecture fini");
       }
       Lecture();
     }
@@ -115,7 +118,6 @@ void loop() {
     //Affiche();
 
     recFini = false;
-    tRec = micros();
   }
 
   pixels.show();
@@ -126,21 +128,25 @@ void Lecture()
 {
   float sensorValue = 0.006466 * analogRead(A8) - 2.549569;
   float utemps = 60000000 / (tempo * 4) * sensorValue;
-  static bool offPassed = false;
+  static bool offPassed = false, firstOnPassed = false;
 
-  if (micros() >= tRec + utemps * 0.5 && !offPassed) // check si il faut eteindre
+  if (micros() >= tRec + utemps * 0.7 && !offPassed) // check si il faut eteindre
   {
     curseurP++;
     LedOff();
     //Serial.println("into LEDOFF");
     offPassed = true;
+    Serial.println(*compteurP);
+    Serial.print("Curseur : ");
+    Serial.println(curseurP);
   }
 
-  if (micros() >= tRec + utemps)
+  if (micros() >= tRec + utemps || !firstOnPassed)
   {
     LedOn();
     tRec = micros();
     offPassed = false;
+    firstOnPassed = true;
     //Serial.println("into LEDON");
   }
 }
@@ -179,8 +185,14 @@ void LedOff()
       {
         (*compteurP)--;
         i--;
+        Serial.print("au décrémenteur : ");
+        Serial.println(*compteurP);
+        Serial.print("i : ");
+        Serial.println(i);
+        Serial.println();
       }
     }
+
   }
 }
 
