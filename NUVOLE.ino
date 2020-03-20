@@ -77,7 +77,7 @@ void setup() {
   InitVariables();
 
   //------------------------FILE-----------------
-  myFile = SD.open("Mattina.txt");
+  myFile = SD.open("Nuvole.txt");
 
   // -------------------PREMIER REMPLISSAGE---------
   bool recFini = false;
@@ -101,7 +101,7 @@ void loop() {
   {
     //Serial.println(*compteurP);
     //Serial.println("Dans 1 eme boucle");
-    while (*compteurP != 0)
+    while (stockP[0].led != 0)
     {
       //Serial.println("Dans 2 eme boucle");
       while (!recFini)
@@ -136,9 +136,6 @@ void Lecture()
     LedOff();
     //Serial.println("into LEDOFF");
     offPassed = true;
-    Serial.println(*compteurP);
-    Serial.print("Curseur : ");
-    Serial.println(curseurP);
   }
 
   if (micros() >= tRec + utemps || !firstOnPassed)
@@ -175,21 +172,16 @@ void LedOff()
       pixels.setPixelColor(stockP[i].led, 0);
       pixels.show();
 
-      stockP[*compteurP].led = 0;
-      stockP[*compteurP].tdebut = 0;
-      stockP[*compteurP].duree = 0;
-      stockP[*compteurP].main = 0;
+      stockP[i].led = 0;
+      stockP[i].tdebut = 0;
+      stockP[i].duree = 0;
+      stockP[i].main = 0;
       Decalage(i);
 
       if (*compteurP > 0)
       {
         (*compteurP)--;
         i--;
-        Serial.print("au décrémenteur : ");
-        Serial.println(*compteurP);
-        Serial.print("i : ");
-        Serial.println(i);
-        Serial.println();
       }
     }
 
