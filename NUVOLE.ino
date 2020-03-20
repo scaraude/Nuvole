@@ -21,6 +21,19 @@
 
 //--------------------------------DECL. LED------------------
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+//-------------------------------CONFIG BUTTONS LCD-----------
+#define btnRIGHT  0
+#define btnUP     1
+#define btnDOWN   2
+#define btnLEFT   3
+#define btnSELECT 4
+#define btnNONE   5
+
+//--------------------------------DECL. LCD-------------------
+// Select the pin used on LCD
+LiquidCrystal lcd(8, 9, 30, 5, 6, 7);
+
 //--------------------------------DECL. FILE------------------
 File myFile;
 
@@ -48,6 +61,8 @@ int tempo = 40;
 uint8_t curseurP;
 static unsigned long tRec;
 
+int adc_key_in  = 0;
+
 
 
 void setup() {
@@ -73,40 +88,41 @@ void setup() {
   pixels.setBrightness(BRIGHTNESS);
   pixels.show();   // Send the updated pixel colors to the hardware.
 
-  //--------------------INIT VARIABLE-----------------
-  InitVariables();
+  //--------------------INIT LCD--------------------
+  lcd.begin(16, 2);
+}
+
+void loop() {
 
   //------------------------FILE-----------------
-  myFile = SD.open("Nuvole.txt");
+  myFile = SD.open("batuque.txt");
 
-  // -------------------PREMIER REMPLISSAGE---------
+  
+  // put your main code here, to run repeatedly:
   bool recFini = false;
 
+  //--------------------INIT VARIABLE-----------------
+  InitVariables();
+  
+  // -------------------PREMIER REMPLISSAGE---------
   Rec();
 
   while (!recFini)
   {
-    //Serial.println("Dans 3 eme boucle");
     recFini = Rec();
   }
   Aiguillage();
   tRec = micros();
-}
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  bool recFini = false, musiqueFini = false;
-
-  while (!musiqueFini)
+  recFini = false;
+  //-------------------------------------------------
+  
+  while (stockP[0].led != 0)  // Musique fini (rien dans le stock play après l'aiguillage
   {
-    //Serial.println(*compteurP);
-    //Serial.println("Dans 1 eme boucle");
-    while (stockP[0].led != 0)
+    while (stockP[0].led != 0) // Lecture de la mesure fini (plus rien dans le stock play)
     {
-      //Serial.println("Dans 2 eme boucle");
       while (!recFini)
       {
-        //Serial.println("Dans 3 eme boucle");
         Lecture();
         recFini = Rec();
         if (recFini)
@@ -114,14 +130,11 @@ void loop() {
       }
       Lecture();
     }
-    musiqueFini = Aiguillage();                           //inverse le stock joué et le stock enregistré
-    //Affiche();
+    Aiguillage();                           //inverse le stock joué et le stock enregistré
 
     recFini = false;
   }
-
-  pixels.show();
-  tRec = micros();
+  myFile.close();
 }
 
 void Lecture()
@@ -286,14 +299,11 @@ bool Rec()
   return false;                         // baisse drapeau silence
 }
 
-bool Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGISTRER (inverse les pointeurs)
+void Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGISTRER (inverse les pointeurs)
 {
   //Serial.println("dans Aiguillage");
   if (JouerDansDroit)
   {
-    memset(&stockDroit, 0, sizeof(stockDroit)); //rénitialise le tableau pour l'enregistrement
-    compteurDroit = 0;
-
     stockP = stockGauche;
     compteurP = &compteurGauche;
 
@@ -304,9 +314,6 @@ bool Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
   }
   else
   {
-    memset(&stockGauche, 0, sizeof(stockGauche)); //rénitialise le tableau pour l'enregistrement
-    compteurGauche = 0;
-
     stockP = stockDroit;
     compteurP = &compteurDroit;
 
@@ -317,12 +324,25 @@ bool Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
   }
 
   curseurP = 0;
-  //Affiche();
+  Affiche();
+  
+  lcd.setCursor(7, 1);           // The cursor moves to the beginning of the second line.
+  lcd.print(nextMesure);
+}
 
-  if (!myFile.available())
-    return true;
+int read_LCD_buttons()
+{
+  adc_key_in = analogRead(0);          // read analog A0 value
+  // when read the 5 key values in the vicinity of the following：0,144,329,504,741
+  // By setting different threshold, you can read the one button
+  if (adc_key_in > 1000) return btnNONE;
+  if (adc_key_in < 50)   return btnRIGHT;
+  if (adc_key_in < 250)  return btnUP;
+  if (adc_key_in < 450)  return btnDOWN;
+  if (adc_key_in < 650)  return btnLEFT;
+  if (adc_key_in < 850)  return btnSELECT;
 
-  return false;
+  return btnNONE;
 }
 
 void Affiche()
@@ -338,5 +358,6 @@ void Affiche()
     Serial.print("\t");
     Serial.println(stockP[i].main);
   }
+  Serial.println(*compteurP);
   Serial.println(nextMesure);
 }
