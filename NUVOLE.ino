@@ -23,12 +23,12 @@
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 //-------------------------------CONFIG BUTTONS LCD-----------
-#define btnRIGHT  0
-#define btnUP     1
-#define btnDOWN   2
-#define btnLEFT   3
-#define btnSELECT 4
-#define btnNONE   5
+#define btnRIGHT  1
+#define btnUP     2
+#define btnDOWN   3
+#define btnLEFT   4
+#define btnSELECT 5
+#define btnNONE   0
 
 //--------------------------------DECL. LCD-------------------
 // Select the pin used on LCD
@@ -60,8 +60,6 @@ uint8_t nextMesure;
 int tempo = 40;
 uint8_t curseurP;
 static unsigned long tRec;
-
-int adc_key_in  = 0;
 
 
 
@@ -95,15 +93,16 @@ void setup() {
 void loop() {
 
   //------------------------FILE-----------------
-  myFile = SD.open("batuque.txt");
+  myFile = SD.open("mattina.txt");
 
-  
+
   // put your main code here, to run repeatedly:
   bool recFini = false;
+  int lcd_key = 0;
 
   //--------------------INIT VARIABLE-----------------
   InitVariables();
-  
+
   // -------------------PREMIER REMPLISSAGE---------
   Rec();
 
@@ -112,14 +111,14 @@ void loop() {
     recFini = Rec();
   }
   Aiguillage();
-  tRec = micros();
 
   recFini = false;
   //-------------------------------------------------
-  
-  while (stockP[0].led != 0)  // Musique fini (rien dans le stock play après l'aiguillage
+  tRec = micros();
+
+  while (stockP[0].led != 0 && myFile)  // Musique fini (rien dans le stock play après l'aiguillage
   {
-    while (stockP[0].led != 0) // Lecture de la mesure fini (plus rien dans le stock play)
+    while (stockP[0].led != 0 && myFile) // Lecture de la mesure fini (plus rien dans le stock play)
     {
       while (!recFini)
       {
@@ -128,13 +127,16 @@ void loop() {
         if (recFini)
           Serial.println("Lecture fini");
       }
+      if (lcd_key = read_LCD_buttons())
+        myFile.close();
       Lecture();
     }
     Aiguillage();                           //inverse le stock joué et le stock enregistré
 
     recFini = false;
   }
-  myFile.close();
+  if(myFile)
+    myFile.close();
 }
 
 void Lecture()
@@ -325,14 +327,20 @@ void Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
 
   curseurP = 0;
   Affiche();
-  
+
+  pixels.clear();
+  pixels.show();
+
+  lcd.clear();
   lcd.setCursor(7, 1);           // The cursor moves to the beginning of the second line.
   lcd.print(nextMesure);
 }
 
 int read_LCD_buttons()
 {
-  adc_key_in = analogRead(0);          // read analog A0 value
+
+  int adc_key_in  = analogRead(0);          // read analog A0 value
+  
   // when read the 5 key values in the vicinity of the following：0,144,329,504,741
   // By setting different threshold, you can read the one button
   if (adc_key_in > 1000) return btnNONE;
@@ -358,6 +366,5 @@ void Affiche()
     Serial.print("\t");
     Serial.println(stockP[i].main);
   }
-  Serial.println(*compteurP);
   Serial.println(nextMesure);
 }
