@@ -99,7 +99,8 @@ void loop() {
   // put your main code here, to run repeatedly:
   bool recFini = false;
   int lcd_key = 0;
-  int debut = 1;
+  int debut = 4;
+  int fin = 5;
 
   //--------------------INIT VARIABLE-----------------
   InitVariables();
@@ -107,7 +108,7 @@ void loop() {
   // -------------------PREMIER REMPLISSAGE---------
   Rec();
 
-  while (nextMesure != debut + 1)
+  while (nextMesure < debut + 1)
   {
     while (!recFini)
     {
@@ -135,6 +136,8 @@ void loop() {
         myFile.close();
       Lecture();
     }
+    if (nextMesure >= fin)
+      myFile.close();
     Aiguillage();                           //inverse le stock joué et le stock enregistré
 
     recFini = false;
