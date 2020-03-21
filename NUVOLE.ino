@@ -57,7 +57,7 @@ uint8_t *compteurP, *compteurR;
 
 bool JouerDansDroit;
 uint8_t nextMesure;
-int tempo = 40;
+int tempo = 80;
 uint8_t curseurP;
 static unsigned long tRec;
 
@@ -99,6 +99,7 @@ void loop() {
   // put your main code here, to run repeatedly:
   bool recFini = false;
   int lcd_key = 0;
+  int debut = 1;
 
   //--------------------INIT VARIABLE-----------------
   InitVariables();
@@ -106,13 +107,16 @@ void loop() {
   // -------------------PREMIER REMPLISSAGE---------
   Rec();
 
-  while (!recFini)
+  while (nextMesure != debut + 1)
   {
-    recFini = Rec();
-  }
-  Aiguillage();
+    while (!recFini)
+    {
+      recFini = Rec();
+    }
+    Aiguillage();
 
-  recFini = false;
+    recFini = false;
+  }
   //-------------------------------------------------
   tRec = micros();
 
@@ -135,7 +139,7 @@ void loop() {
 
     recFini = false;
   }
-  if(myFile)
+  if (myFile)
     myFile.close();
 }
 
@@ -306,6 +310,9 @@ void Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
   //Serial.println("dans Aiguillage");
   if (JouerDansDroit)
   {
+    memset(&stockDroit, 0, sizeof(stockDroit));
+    compteurDroit = 0;
+    
     stockP = stockGauche;
     compteurP = &compteurGauche;
 
@@ -316,6 +323,9 @@ void Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
   }
   else
   {
+    memset(&stockGauche, 0, sizeof(stockGauche));
+    compteurGauche = 0;
+
     stockP = stockDroit;
     compteurP = &compteurDroit;
 
@@ -340,7 +350,7 @@ int read_LCD_buttons()
 {
 
   int adc_key_in  = analogRead(0);          // read analog A0 value
-  
+
   // when read the 5 key values in the vicinity of the following：0,144,329,504,741
   // By setting different threshold, you can read the one button
   if (adc_key_in > 1000) return btnNONE;
