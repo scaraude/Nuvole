@@ -30,7 +30,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define btnSELECT 5
 #define btnNONE   0
 
-#define DELAY     700
+#define DELAY     500
 
 //--------------------------------DECL. LCD-------------------
 // Select the pin used on LCD
@@ -102,8 +102,8 @@ void loop() {
   int debut = 1;
   int fin = 1000;
   char *fileName = myFile.name();
-  
-  if(fileChange)
+
+  if (fileChange)
   {
     myFile = ChooseFile();
     fileChange = false;
@@ -139,13 +139,9 @@ void loop() {
       {
         Lecture();
         recFini = Rec();
-        if (recFini)
-          Serial.println("Lecture fini");
       }
       if (read_LCD_buttons() == btnSELECT)
-      {
         myFile.close();
-      }
       else if (read_LCD_buttons())
       {
         fileChange = true;
@@ -332,7 +328,7 @@ void Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
   {
     memset(&stockDroit, 0, sizeof(stockDroit));
     compteurDroit = 0;
-    
+
     stockP = stockGauche;
     compteurP = &compteurGauche;
 
@@ -357,6 +353,9 @@ void Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
 
   curseurP = 0;
   //Affiche();
+
+  pixels.clear();
+  pixels.show();
 
   lcd.clear();
   lcd.setCursor(0, 0);           // The cursor moves to the beginning of the second line.
@@ -429,9 +428,15 @@ File ChooseFile()
           delay(DELAY);
           break;
         }
+      case btnSELECT:
+        {
+          lcd.clear();
+          delay(DELAY);
+          break;
+        }
     }
   }
-  
+
   lcd.clear();
   delay(DELAY);
   return copy;
