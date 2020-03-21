@@ -30,6 +30,8 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define btnSELECT 5
 #define btnNONE   0
 
+#define DELAY     700
+
 //--------------------------------DECL. LCD-------------------
 // Select the pin used on LCD
 LiquidCrystal lcd(8, 9, 30, 5, 6, 7);
@@ -62,7 +64,6 @@ uint8_t curseurP;
 static unsigned long tRec;
 
 
-
 void setup() {
   // put your setup code here, to run once:
 
@@ -88,20 +89,29 @@ void setup() {
 
   //--------------------INIT LCD--------------------
   lcd.begin(16, 2);
+
+  //------------------------FILE-----------------
+  myFile = ChooseFile();
 }
 
 void loop() {
 
-  //------------------------FILE-----------------
-  myFile = SD.open("mattina.txt");
-
-
   // put your main code here, to run repeatedly:
   bool recFini = false;
-  int lcd_key = 0;
-  int debut = 4;
-  int fin = 5;
+  static bool fileChange = false;
+  int debut = 1;
+  int fin = 1000;
+  char *fileName = myFile.name();
+  
+  if(fileChange)
+  {
+    myFile = ChooseFile();
+    fileChange = false;
+    fileName = myFile.name();
+  }
 
+  if (!myFile)
+    myFile = SD.open(fileName);
   //--------------------INIT VARIABLE-----------------
   InitVariables();
 
@@ -132,8 +142,15 @@ void loop() {
         if (recFini)
           Serial.println("Lecture fini");
       }
-      if (lcd_key = read_LCD_buttons())
+      if (read_LCD_buttons() == btnSELECT)
+      {
         myFile.close();
+      }
+      else if (read_LCD_buttons())
+      {
+        fileChange = true;
+        myFile.close();
+      }
       Lecture();
     }
     if (nextMesure >= fin)
@@ -339,14 +356,85 @@ void Aiguillage()                       //INVERSE LES TABLEAUX JOUER ET ENREGIST
   }
 
   curseurP = 0;
-  Affiche();
-
-  pixels.clear();
-  pixels.show();
+  //Affiche();
 
   lcd.clear();
+  lcd.setCursor(0, 0);           // The cursor moves to the beginning of the second line.
+  lcd.print(myFile.name());
   lcd.setCursor(7, 1);           // The cursor moves to the beginning of the second line.
   lcd.print(nextMesure);
+}
+
+File ChooseFile()
+{
+
+  //f.close() le fichier en cour (myFile)
+  File file;
+  File copy;
+
+  int compteurFichier = 0;
+  int key = btnNONE;
+
+  lcd.clear();
+  lcd.setCursor(0, 0);           // The cursor moves to the beginning of the second line.
+
+  file = SD.open("/");
+  copy = file.openNextFile();
+  compteurFichier++;
+  copy = file.openNextFile();
+  compteurFichier++;
+  copy = file.openNextFile();
+  compteurFichier++;
+  //test = copy;
+
+  while (key != btnSELECT)
+  {
+    key = read_LCD_buttons();  // read key
+
+    lcd.setCursor(0, 0);           // The cursor moves to the beginning of the second line.
+    lcd.print(copy.name());
+
+    switch (key)               // display key
+    {
+      case btnDOWN:
+        {
+          lcd.clear();
+
+          copy = file.openNextFile();
+          compteurFichier++;
+
+          if (!copy) {
+            compteurFichier = 0;
+
+            file.rewindDirectory();
+            copy = file.openNextFile();
+            compteurFichier++;
+            copy = file.openNextFile();
+            compteurFichier++;
+            copy = file.openNextFile();
+            compteurFichier++;
+          }
+          delay(DELAY);
+          break;
+        }
+      case btnUP:
+        {
+          lcd.clear();
+
+          int j;
+          file.rewindDirectory();
+          for (j = 0; j < compteurFichier - 1; j++)
+            copy = file.openNextFile();
+          compteurFichier = j;
+          delay(DELAY);
+          break;
+        }
+    }
+  }
+  
+  lcd.clear();
+  delay(DELAY);
+  return copy;
 }
 
 int read_LCD_buttons()
